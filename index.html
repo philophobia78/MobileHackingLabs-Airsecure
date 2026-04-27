@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AirSecure Boarding Pass</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f4f8;
+            min-height: 100vh;
+            color: #333;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            color: white;
+            padding: 32px 20px 24px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .header p {
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        /* Boarding pass card */
+        .bp-section {
+            display: none;
+            padding: 16px 16px 0;
+        }
+        .bp-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .bp-card-header {
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            color: white;
+            padding: 16px 20px;
+        }
+        .bp-card-header h2 { font-size: 16px; font-weight: 600; }
+        .bp-card-header p { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+        .bp-card-body { padding: 20px; }
+        .bp-field { margin-bottom: 14px; }
+        .bp-field label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 0.5px;
+        }
+        .bp-field .bp-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #222;
+            margin-top: 2px;
+        }
+        .bp-row { display: flex; gap: 16px; }
+        .bp-row .bp-field { flex: 1; }
+        .bp-qr {
+            text-align: center;
+            padding: 16px 20px 8px;
+        }
+        .bp-qr svg {
+            max-width: 200px;
+            height: auto;
+        }
+        .bp-status {
+            text-align: center;
+            padding: 12px 20px 16px;
+            font-size: 13px;
+            color: #2e7d32;
+        }
+        .bp-delete {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 14px 20px;
+            border-top: 1px solid #f0f0f0;
+            color: #c62828;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .bp-delete:active {
+            background: #fef2f2;
+        }
+        .bp-delete-icon {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        /* Menu */
+        .menu {
+            padding: 16px;
+        }
+        .menu-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            padding: 16px;
+            margin-bottom: 10px;
+            text-decoration: none;
+            color: inherit;
+            transition: box-shadow 0.15s;
+        }
+        .menu-item:active {
+            box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+        }
+        .menu-icon {
+            font-size: 24px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            margin-right: 14px;
+            flex-shrink: 0;
+        }
+        .icon-flights { background: #e3f2fd; }
+        .icon-status { background: #e8f5e9; }
+        .icon-upgrade { background: #fff3e0; }
+        .icon-weather { background: #fce4ec; }
+        .menu-text h2 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #222;
+            margin-bottom: 2px;
+        }
+        .menu-text p {
+            font-size: 12px;
+            color: #888;
+        }
+        .menu-arrow {
+            margin-left: auto;
+            color: #ccc;
+            font-size: 18px;
+        }
+        .scan-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 8px 16px;
+            padding: 16px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            width: calc(100% - 32px);
+        }
+        .scan-btn:active {
+            background: #1565c0;
+        }
+        .upload-btn {
+            background: white;
+            color: #1a73e8;
+            border: 2px solid #1a73e8;
+        }
+        .upload-btn:active {
+            background: #e3f2fd;
+        }
+        .scan-btn-icon {
+            font-size: 20px;
+        }
+        .footer {
+            text-align: center;
+            padding: 16px;
+            padding-bottom: 80px;
+            font-size: 11px;
+            color: #aaa;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script>
+        function deleteBoardingPass() {
+            window.BoardingPass.deletePassengerInfo();
+            window.BoardingPass.onDeletionCompleted();
+        }
+        window.onload = function() {
+            try {
+                var infoStr = window.BoardingPass.getPassengerInfo();
+                if (infoStr && infoStr.length > 0) {
+                    var info = JSON.parse(infoStr);
+                    document.getElementById('bp-name').textContent = info.name || 'N/A';
+                    document.getElementById('bp-flight').textContent = info.flight || '--';
+                    document.getElementById('bp-seat').textContent = info.seat || '--';
+                    document.getElementById('bp-row').textContent = info.row || '--';
+                    document.getElementById('bp-eticket').textContent = info.eticket || '--';
+                    document.getElementById('bp-section').style.display = 'block';
+
+                    var qrData = info._qr || infoStr;
+                    var qr = qrcode(0, 'M');
+                    qr.addData(qrData);
+                    qr.make();
+                    document.getElementById('bp-qr').innerHTML = qr.createSvgTag(4);
+                }
+            } catch (e) {
+                // No boarding pass data - just show the menu
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="header">
+        <h1>AirSecure</h1>
+        <p>Your digital boarding pass wallet</p>
+    </div>
+
+    <div class="bp-section" id="bp-section">
+        <div class="bp-card">
+            <div class="bp-card-header">
+                <h2>AirSecure Digital Pass</h2>
+                <p>Your Boarding Pass</p>
+            </div>
+            <div class="bp-card-body">
+                <div class="bp-field">
+                    <label>Passenger</label>
+                    <div class="bp-value" id="bp-name">--</div>
+                </div>
+                <div class="bp-row">
+                    <div class="bp-field">
+                        <label>Flight</label>
+                        <div class="bp-value" id="bp-flight">--</div>
+                    </div>
+                    <div class="bp-field">
+                        <label>Seat</label>
+                        <div class="bp-value" id="bp-seat">--</div>
+                    </div>
+                    <div class="bp-field">
+                        <label>Row</label>
+                        <div class="bp-value" id="bp-row">--</div>
+                    </div>
+                </div>
+                <div class="bp-field">
+                    <label>E-Ticket</label>
+                    <div class="bp-value" id="bp-eticket">--</div>
+                </div>
+            </div>
+            <div class="bp-qr" id="bp-qr"></div>
+            <div class="bp-status">Boarding Pass ready.</div>
+            <div class="bp-delete" onclick="deleteBoardingPass()">
+                <span class="bp-delete-icon">&#10005;</span> Delete Boarding Pass
+            </div>
+        </div>
+    </div>
+
+    <div class="menu">
+        <a class="menu-item" href="file:///android_asset/flights.html">
+            <div class="menu-icon icon-flights">&#9992;</div>
+            <div class="menu-text">
+                <h2>My Flights</h2>
+                <p>View upcoming trips and itineraries</p>
+            </div>
+            <div class="menu-arrow">&rsaquo;</div>
+        </a>
+
+        <a class="menu-item" href="file:///android_asset/status.html">
+            <div class="menu-icon icon-status">&#9201;</div>
+            <div class="menu-text">
+                <h2>Flight Status</h2>
+                <p>Real-time departures and arrivals</p>
+            </div>
+            <div class="menu-arrow">&rsaquo;</div>
+        </a>
+
+        <a class="menu-item" href="file:///android_asset/upgrade.html">
+            <div class="menu-icon icon-upgrade">&#9733;</div>
+            <div class="menu-text">
+                <h2>Upgrade Waitlist</h2>
+                <p>Check your upgrade position</p>
+            </div>
+            <div class="menu-arrow">&rsaquo;</div>
+        </a>
+
+        <a class="menu-item" href="file:///android_asset/weather.html">
+            <div class="menu-icon icon-weather">&#9748;</div>
+            <div class="menu-text">
+                <h2>Destination Weather</h2>
+                <p>Forecast at your destinations</p>
+            </div>
+            <div class="menu-arrow">&rsaquo;</div>
+        </a>
+    </div>
+
+    <button class="scan-btn" onclick="window.BoardingPass.scanQrCode()">
+        <span class="scan-btn-icon">&#9114;</span> Scan Boarding Pass
+    </button>
+
+    <button class="scan-btn upload-btn" onclick="window.BoardingPass.uploadQrImage()">
+        <span class="scan-btn-icon">&#128206;</span> Upload QR Image
+    </button>
+
+    <div class="footer">
+        v1.0.0 &middot; AirSecure Technologies
+    </div>
+</body>
+</html>
