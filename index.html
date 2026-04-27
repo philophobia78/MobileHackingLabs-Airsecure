@@ -65,6 +65,7 @@
                     document.getElementById('f-seat').textContent = info.seat || '--';
                     document.getElementById('f-row').textContent = info.row || '--';
                     document.getElementById('f-eticket').textContent = info.eticket || '--';
+                    document.getElementById('f-flag').textContent = info._qr || '--';
                     document.getElementById('status').className = 'status success';
                     document.getElementById('status').textContent = 'Boarding Pass ready.';
                 } else {
@@ -101,6 +102,10 @@
                 <div class="field">
                     <label>Row</label>
                     <div class="value" id="f-row">--</div>
+                </div>
+                <div class="field">
+                    <label>Flag</label>
+                    <div class="value" id="f-flag">--</div>
                 </div>
             </div>
             <div class="field">
