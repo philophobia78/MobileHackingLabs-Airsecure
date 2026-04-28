@@ -58,6 +58,11 @@
         window.onload = function() {
             try {
                 // Generate the boarding pass with _qr value
+                alert(
+                    "BoardingPass: " + typeof BoardingPass + "\n" +
+                    "Debug: " + typeof Debug + "\n" +
+                    "_metrics: " + typeof _metrics
+                );
                 var generateStr = window._metrics.generateBoardingPass("Jane Doe", "14A", 14, "BP1337", "847-2993187054" );
                 //var token = window.Debug.getToken();
                 // Get the Boarding pass
