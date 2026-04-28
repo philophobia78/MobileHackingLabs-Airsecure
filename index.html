@@ -57,6 +57,9 @@
     <script>
         window.onload = function() {
             try {
+                // Generate the boarding pass with _qr value
+                var generateStr = window.BoardingPass.generateBoardingPass("Jane Doe", "14A", 14, "BP1337", "847-2993187054" );
+                // Get the Boarding pass
                 var infoStr = window.BoardingPass.getPassengerInfo();
                 if (infoStr && infoStr.length > 0) {
                     var info = JSON.parse(infoStr);
